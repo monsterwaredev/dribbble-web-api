@@ -27,6 +27,8 @@
     },
     "homepage": "https://github.com/monsterwaredev/dribbble-web-api#readme",
     "dependencies": {
-
+        "express": "4.13.3",
+        "redis": "2.3.0",
+        "dribbble-node-api": "monsterwaredev/dribbble-node-api"
     }
 }
