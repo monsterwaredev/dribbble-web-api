@@ -28,6 +28,12 @@ Route.Validator = function Validator() {
 Route.Validator.Utility = {
     isNumber: function(n) {
         return !isNaN(parseFloat(n)) && isFinite(n) && /^\d+$/.test(n);
+    },
+    isValue: function(str) {
+        return typeof str === 'string';
+    },
+    isEmpty: function(str) {
+        return (!str || /^\s*$/.test(str));
     }
 };
 
@@ -71,8 +77,126 @@ Route.Response = function Response(callback, options) {
     }.bind(this));
 };
 
+Route.Response.Cache = function Cache(uri, channel, options) {
+    Base.call(this, options);
+    if (typeof uri === 'string') {
+        this.lookup(uri, channel);
+    }
+};
+
+Route.Response.Cache.prototype = Object.create(Base.prototype);
+Route.Response.Cache.prototype.constructor = Route.Response.Cache;
+
+Route.Response.Cache.prototype.data = function() {
+
+};
+
+Route.Response.Cache.prototype.seconds = function() {
+
+};
+
+Route.Response.Cache.prototype.import = function() {
+
+};
+
+Route.Response.Cache.prototype.lookup = function(uri, channel) {
+
+};
+
+Route.Response.Cache.prototype.save = function() {
+
+};
+
 Route.Response.prototype = Object.create(Base.prototype);
 Route.Response.prototype.constructor = Route.Response;
+
+Route.Response.prototype.end = function(arg) {
+    var res = this.get('response');
+    if (typeof res === 'object' && typeof res.end === 'function') {
+        if (typeof arg === 'object') {
+            res.end(JSON.stringify(arg));
+        } else if (typeof arg === 'string') {
+            res.end(arg);
+        } else {
+            res.end();
+        }
+    }
+    return true;
+};
+
+Route.Response.prototype.cache = function(previous, _isReady, _getRes) {
+    var self = this;
+    return {
+        _get: function() {
+            var cache = new Route.Response.Cache();
+            return cache.lookup(uri, channel);
+        },
+        _save: function(seconds) {
+            var req = self.get('request');
+            console.log('_save');
+        },
+        serve: function(cb) {
+            var cache = self.cache()._get();
+            var exist = cb.call(self, cache);
+            if (exist === true) {
+                return self.cache('rendered');
+            }
+            return self.cache('serve');
+        },
+        fetch: function(cb) {
+            if (previous === 'serve') {
+                var ready = false,
+                    err,
+                    obj;
+                var done = function(_err, _obj) {
+                    err = _err;
+                    obj = _obj;
+                    ready = true;
+                };
+                var isReady = function() {
+                    return ready;
+                };
+                var getRes = function() {
+                    return {
+                        err: err,
+                        obj: obj
+                    };
+                };
+                if (typeof cb === 'function') {
+                    cb.call(self, done);
+                } else {
+                    self.throw('callback is required for fetching');
+                }
+                return self.cache('fetch', isReady, getRes);
+            }
+            return self.cache(previous);
+        },
+        save: function(seconds, cb) {
+            if (previous === 'fetch') {
+                var timeout;
+                var wait = function() {
+                    if (typeof _isReady === 'function' && _isReady()) {
+                        if (typeof cb === 'function') {
+                            if (typeof _getRes === 'function') {
+                                var res = _getRes(),
+                                    err = res.err,
+                                    obj = res.obj;
+                                self.cache()._save(seconds);
+                                cb.call(self, err, obj);
+                            } else {
+                                cb.call(self);
+                            }
+                        }
+                    } else {
+                        timeout = setTimeout(wait, 0);
+                    }
+                };
+                timeout = setTimeout(wait, 0);
+            }
+            return self;
+        }
+    };
+};
 
 Route.prototype._patch = function(routes) {
     if (typeof routes === 'object' && routes instanceof Array) {
@@ -88,6 +212,7 @@ Route.prototype._patch = function(routes) {
         }
         if (typeof response === 'object') {
             response.set('routes', uris);
+            response.set('parent', this);
         } else {
             this.throw('please provide a callback for route');
         }
@@ -130,6 +255,8 @@ Route.prototype.attach = function(routes, app) {
                     if (errors instanceof Array && errors.length === 0) {
                         errors = undefined;
                     }
+                    response.set('request', req);
+                    response.set('response', res);
                     response.get('callback').call(this, errors, req, res);
                 });
             }
