@@ -18,9 +18,14 @@ Server.prototype.constructor = Server;
 Server.prototype._init = function() {
     this.require([
         { id: 'express', ref: 'express' },
+        { id: 'body-parser', ref: 'body-parser' },
+        { id: 'hpp', ref: 'hpp' },
         { id: 'fs', ref: 'fs' }
     ]);
     this.set('app', this.require('express')());
+    this.get('app').use(this.require('body-parser').json());
+    this.get('app').use(this.require('body-parser').urlencoded({ extended: true }));
+    this.get('app').use(this.require('hpp')());
     this.set('server', this.get('app').listen(process.env.PORT || 3000, function () {
         var server = this.get('server');
         var host = server.address().address;

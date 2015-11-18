@@ -28,6 +28,8 @@
     "homepage": "https://github.com/monsterwaredev/dribbble-web-api#readme",
     "dependencies": {
         "express": "4.13.3",
+        "body-parser": "1.14.1",
+        "hpp": "0.2.0",
         "redis": "2.3.0",
         "dribbble-node-api": "monsterwaredev/dribbble-node-api"
     }
