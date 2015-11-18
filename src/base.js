@@ -83,7 +83,7 @@ Base.prototype.set = function(key, value) {
     if (typeof key === 'string') {
         this.attributes[key] = value;
     }
-    return value;
+    return this;
 };
 
 Base.prototype.unset = function(key) {
@@ -121,6 +121,10 @@ Base.prototype.log = function(str) {
 Base.prototype.throw = function() {
     this.log.apply(this, arguments);
     process.exit(1);
+};
+
+Base.prototype.parent = function() {
+    return this.get('parent');
 };
 
 module.exports = exports = Base;
