@@ -10,8 +10,18 @@ module.exports = exports = [
             })
         }),
         new Route.Response(function(err, req, res) {
-            console.log(err);
-            res.end('hello world');
+            this.cache().serve(function retrieve(cache) {
+                if (cache && cache.seconds() < 60) {
+                    return this.end(cache.data());
+                }
+                return false;
+            }).fetch(function download(done) {
+                this.parent().parent().get('api').shots(function(err, obj) {
+                    done(err, obj);
+                });
+            }).save(function done(err, obj, cache) {
+                this.end(obj);
+            });
         })
     ]),
     new Route([

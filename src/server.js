@@ -20,17 +20,20 @@ Server.prototype._init = function() {
         { id: 'express', ref: 'express' },
         { id: 'body-parser', ref: 'body-parser' },
         { id: 'hpp', ref: 'hpp' },
-        { id: 'fs', ref: 'fs' }
+        { id: 'fs', ref: 'fs' },
+        { id: 'dribbble', ref: 'dribbble-node-api' }
     ]);
     this.set('app', this.require('express')());
     this.get('app').use(this.require('body-parser').json());
     this.get('app').use(this.require('body-parser').urlencoded({ extended: true }));
     this.get('app').use(this.require('hpp')());
     this.set('server', this.get('app').listen(process.env.PORT || 3000, function () {
-        var server = this.get('server');
-        var host = server.address().address;
-        var port = server.address().port;
+        // get server and its information
+        var server = this.get('server'),
+            host = server.address().address,
+            port = server.address().port;
         this.log('http://{0}:{1}', host, port);
+        this.dribbble();
         this.attach();
     }.bind(this)));
 };
@@ -42,7 +45,9 @@ Server.prototype._lookupRoutes = function() {
             if (typeof module === 'object' && module instanceof Array) {
                 for (var i = 0; i < module.length; i++) {
                     if (typeof module[i] === 'object' && module[i] instanceof Route) {
-                        module[i].attach(module[i], this.get('app'));
+                        module[i]
+                            .set('parent', this)
+                            .attach(module[i], this.get('app'));
                     }
                 }
             }
@@ -52,6 +57,15 @@ Server.prototype._lookupRoutes = function() {
 
 Server.prototype.attach = function() {
     return this._lookupRoutes();
+};
+
+Server.prototype.dribbble = function() {
+    // set up dribbble api instance
+    var dribbble = new (this.require('dribbble'));
+    // set access_token
+    dribbble.set('access_token', 'ddd74328bb9bbf4645a5ced13514e3fefd6e7fafc1b8b0a9d3b8f27581ac7ce3');
+    // set access point
+    this.set('api', dribbble);
 };
 
 module.exports = exports = Server;
