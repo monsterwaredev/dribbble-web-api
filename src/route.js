@@ -79,6 +79,13 @@ Route.Response = function Response(callback, options) {
 
 Route.Response.Cache = function Cache(uri, channel, options) {
     Base.call(this, options);
+    this.require([
+        { id: 'client', ref: 'redis' }
+    ]);
+    this.require('redis', this.require('client').createClient({
+        host: '127.0.0.1',
+        port: 6379
+    }));
     if (typeof uri === 'string') {
         this.lookup(uri, channel);
     }
@@ -100,7 +107,6 @@ Route.Response.Cache.prototype.import = function() {
 };
 
 Route.Response.Cache.prototype.lookup = function(uri, channel) {
-
 };
 
 Route.Response.Cache.prototype.save = function() {
@@ -128,8 +134,10 @@ Route.Response.prototype.cache = function(previous, _isReady, _getRes) {
     var self = this;
     return {
         _get: function() {
+            var request = self.get('request');
             var cache = new Route.Response.Cache();
-            return cache.lookup(uri, channel);
+            console.log(request.url);
+            // return cache.lookup(uri, channel);
         },
         _save: function(seconds) {
             var req = self.get('request');

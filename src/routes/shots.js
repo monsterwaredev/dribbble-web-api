@@ -19,7 +19,7 @@ module.exports = exports = [
                 this.parent().parent().get('api').shots(function(err, obj) {
                     done(err, obj);
                 });
-            }).save(function done(err, obj, cache) {
+            }).save(60, function done(err, obj, cache) {
                 this.end(obj);
             });
         })
